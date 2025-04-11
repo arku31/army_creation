@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Army Battler</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Army Battler</h1>
+
+<div id="setup-area">
+    <label for="num1">Army Size (for both armies):</label>
+    <input type="number" id="num1" value="50" min="1">
+    <button id="generateArmiesButton">Generate Armies</button>
+</div>
+
+<div id="battlefield">
+    <div id="army1-container" class="army-container">
+        <h2>Army 1</h2>
+        <div id="army1-units" class="unit-area"></div>
+    </div>
+
+    <div id="fight-button-container">
+        <button id="fightButton" style="display: none;">Fight!</button>
+    </div>
+
+    <div id="army2-container" class="army-container">
+        <h2>Army 2</h2>
+        <div id="army2-units" class="unit-area"></div>
+    </div>
+
+
+</div>
+<div id="result-message"></div>
+<div id="unit-tooltip" style="display: none;"></div>
+<script src="script.js"></script>
+</body>
+</html>
