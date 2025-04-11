@@ -66,41 +66,54 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentLineCount = 0;
 
         armyData.troops.forEach(troopGroup => {
-            // Ensure troopGroup and its units are valid
-            if (!troopGroup || !troopGroup.units || troopGroup.units.length === 0 || !troopGroup.units[0]) {
-                console.warn("Skipping invalid troop group:", troopGroup);
+            // Ensure troopGroup and its units array are valid
+            if (!troopGroup || !troopGroup.units || !Array.isArray(troopGroup.units) || troopGroup.units.length === 0) {
+                console.warn("Skipping troop group with no valid units array:", troopGroup);
                 return;
             }
 
-            // Use the stats & type from the first unit in the group as representative
-            const representativeUnit = troopGroup.units[0];
-            const troopType = representativeUnit.troopType;
-            const unitName = troopGroup.unitType || 'Unknown Unit'; // Use unitType for name
-            const colorClass = getUnitColorClass(troopType);
-            const health = representativeUnit.health ?? 'N/A'; // Use nullish coalescing for default
-            const attack = representativeUnit.attack ?? 'N/A';
-            const defense = representativeUnit.defense ?? 'N/A';
+            const unitName = troopGroup.unitType || 'Unknown Unit';
 
+            troopGroup.units.forEach(individualUnit => {
+                // Make sure the individual unit data is valid
+                if (!individualUnit || !individualUnit.troopType) {
+                    console.warn(`Skipping invalid individual unit data within group '${unitName}':`, individualUnit);
+                    return; // Skip this specific square if unit data is bad
+                }
 
-            for (let i = 0; i < troopGroup.count; i++) {
+                // Check for line wrapping
                 if (currentLineCount >= MAX_UNITS_PER_LINE) {
+                    // We rely on flex-wrap, just reset the counter conceptually
                     currentLineCount = 0;
                 }
 
+                // Get properties for THIS specific unit
+                const troopType = individualUnit.troopType;
+                const colorClass = getUnitColorClass(troopType);
+                const health = individualUnit.health ?? 'N/A'; // Use default if undefined/null
+                const attack = individualUnit.attack ?? 'N/A';
+                const defense = individualUnit.defense ?? 'N/A';
+
+                // Create the square element
                 const unitSquare = document.createElement('div');
                 unitSquare.classList.add('unit-square', colorClass);
 
-                // --- Add data attributes for tooltip ---
-                unitSquare.dataset.unitName = unitName;
+                unitSquare.dataset.unitName = unitName; // Name is from the group
                 unitSquare.dataset.health = health;
                 unitSquare.dataset.attack = attack;
                 unitSquare.dataset.defense = defense;
-                // --------------------------------------
+                // ----------------------------------------------------
 
                 containerDiv.appendChild(unitSquare);
                 currentLineCount++;
+            }); // End of loop for individual units
+
+            // Optional: Add a warning if count mismatches units.length, indicating potential API data issue
+            if (troopGroup.count !== troopGroup.units.length) {
+                console.warn(`Potential data issue for ${unitName}: API 'count' (${troopGroup.count}) differs from actual 'units' array length (${troopGroup.units.length}). Displayed based on units array.`);
             }
-        });
+
+        }); // End of loop for troop groups
     }
 
     function showTooltip(event) {
