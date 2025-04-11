@@ -158,39 +158,71 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltip.style.top = `${event.pageY + 10 - scrollY}px`;
         }
     }
+    /**
+     * Calculates the total power of a single army based on the sum of
+     * health, attack, and defense of all its individual units.
+     * @param {object} armyData - The army data object from the API.
+     * @returns {number} The calculated total power of the army.
+     */
+    function calculateArmyPower(armyData) {
+        let totalPower = 0;
 
-    function calculateWinner(army1, army2) {
-        if (!army1 || !army2 || !army1.troops || !army2.troops) {
-            return "Cannot determine winner: Invalid army data.";
+        if (!armyData || !armyData.troops || !Array.isArray(armyData.troops)) {
+            console.warn("Cannot calculate power: Invalid army data structure provided.", armyData);
+            return 0; // Return 0 if the basic structure is invalid
         }
 
-        let power1 = 0;
-        let power2 = 0;
+        armyData.troops.forEach(troopGroup => {
+            // Ensure the units array exists and is an array
+            if (troopGroup.units && Array.isArray(troopGroup.units)) {
+                // Iterate over EACH unit object in the units array
+                troopGroup.units.forEach(individualUnit => {
+                    // Add stats only if they are valid numbers, default to 0 otherwise
+                    const health = individualUnit?.health ?? 0; // Optional chaining + nullish coalescing
+                    const attack = individualUnit?.attack ?? 0;
+                    const defense = individualUnit?.defense ?? 0;
 
-        // Simple Power Calculation: Sum of (count * (attack + defense + health)) for each unit type
-        // Using the stats from the *first* unit in the `units` array as representative for the group.
-        army1.troops.forEach(troop => {
-            if (troop.units && troop.units.length > 0) {
-                const unitStats = troop.units[0];
-                power1 += troop.count * (unitStats.attack + unitStats.defense + unitStats.health);
+                    // Add this unit's contribution to the total power
+                    totalPower += health + attack + defense;
+
+                    // Optional: Add stricter type checking if needed
+                    /*
+                    if (typeof health === 'number' && typeof attack === 'number' && typeof defense === 'number') {
+                        totalPower += health + attack + defense;
+                    } else {
+                        console.warn("Skipping unit in power calculation due to non-numeric stats:", individualUnit, "in group:", troopGroup.unitType);
+                    }
+                    */
+                });
+            } else {
+                console.warn("Skipping troop group in power calculation due to missing/invalid units array:", troopGroup);
             }
         });
 
-        army2.troops.forEach(troop => {
-            if (troop.units && troop.units.length > 0) {
-                const unitStats = troop.units[0];
-                power2 += troop.count * (unitStats.attack + unitStats.defense + unitStats.health);
-            }
-        });
+        return totalPower;
+    }
+    function calculateWinner(army1, army2) {
+        if (!army1 || !army2) {
+            return "Cannot determine winner: One or both armies are missing.";
+        }
 
-        console.log(`Army 1 Power: ${power1}, Army 2 Power: ${power2}`); // For debugging
+        const power1 = calculateArmyPower(army1);
+        const power2 = calculateArmyPower(army2);
+
+        console.log(`Army 1 Power (Individual Sum): ${power1}, Army 2 Power (Individual Sum): ${power2}`); // For debugging
 
         if (power1 > power2) {
-            return "Army 1 Wins!";
+            return power1+" > "+power2+"; Army 1 Wins!";
         } else if (power2 > power1) {
-            return "Army 2 Wins!";
-        } else {
+            return power1+" < "+power2+"; Army 2 Wins!";
+        } else if (power1 === 0 && power2 === 0 && (!army1.troops || army1.troops.length === 0) && (!army2.troops || army2.troops.length === 0)) {
+            // Refined condition: only show this if armies were truly empty/invalid from the start
+            return "Cannot determine winner (both armies appear empty or invalid).";
+        } else if (power1 === power2) { // Catch all other equal power scenarios
             return "It's a Draw!";
+        } else {
+            // Should not happen with the logic above, but as a fallback:
+            return "Could not determine the winner.";
         }
     }
 
