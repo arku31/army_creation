@@ -1,0 +1,19 @@
+{
+    "name": "igortverdokhleb/armygenerator",
+    "type": "project",
+    "require": {
+        "phpunit/phpunit": "^12.1"
+    },
+    "license": "Freemium",
+    "autoload": {
+        "psr-4": {
+            "AG\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Igor Tverdokhleb",
+            "email": "arku31@gmail.com"
+        }
+    ]
+}
